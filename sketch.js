@@ -58,7 +58,6 @@ function preload() {
    defaultFont = loadFont("default.ttf");
 
    loadStrings('words.txt', fileLoaded);
-   BGRimage = loadImage('1.png');
 
 }
 
