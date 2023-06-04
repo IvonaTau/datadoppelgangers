@@ -1,8 +1,8 @@
 let videos = [];
 let poses = [[], [], [], []];
 
-let vidW = 1280;
-let vidH = 960;
+let vidW = 1920;
+let vidH = 1080;
 let word
 
 let numStreaks = 700;
