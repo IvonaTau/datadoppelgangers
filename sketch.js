@@ -4,8 +4,9 @@ let poses = [[], [], [], []];
 let vidW = 1920;
 let vidH = 1080;
 let word
+let WORDS
 
-let numStreaks = 700;
+let numStreaks = 1;
 let scaleFactor;
 
 const maxXChange = 60;
@@ -17,25 +18,27 @@ const confidenceThreshold = 0.1;
 
 let timeDisplay;
 let frameCounter = 0;
+let tintDirection = 0.5; // 1 for increasing, -1 for decreasing
 let personAddresses = [[], [], [], []];  // One array for each video
 let personColors = [[], [], [], []];
 let noiseOffsets = [[], [], [], []]; // Initialize an empty 2D array for the noise offsets
 let wordTrails = [[], [], [], []];
 
-
-// const bbColor = [238, 75, 43]; // reddish
-const bbColor = [243, 95, 61]; // magenta
-// const tintColor = [0, 0, 255,150];
-// const tintColor = [50, 205, 50,150];
-let tintColor = [255, 255, 0,150];
+let BGRimage;
 
 
+const bbColor = [238, 75, 43]; // reddish
+const hipsColor = [9,171,155]; 
 
-const hipsColor = [45,205,204]; // blueish
-let rectColor = [200,255,1]; // yellowish
+// let rectColor = [238, 75, 43]; // yellowish
 
+let colors = [[255, 0, 0], [255, 127, 0], [255, 255, 0], [0, 255, 0], [0, 0, 255], [75, 0, 130], [148, 0, 211]];
 
-const TONES = [[196, 43, 167], [97, 153, 147], [97, 153, 147], [69, 136, 247], [217, 136, 96]];
+  let colorStops = ["rgba(255,0,0,0.5)", "rgba(255,255,0,0.5)", "rgba(0,255,0,0.5)", 
+                    "rgba(0,255,255,0.5)", "rgba(0,0,255,0.5)", "rgba(255,0,255,0.5)",
+                    "rgba(255,255,255,0.5)", "rgba(127,127,127,0.5)"];
+
+const TONES = [[196, 43, 167], [97, 153, 147], [69, 136, 247], [217, 136, 96]];
 
 const glitchColors = [
       [238, 75, 43], // red
@@ -47,12 +50,14 @@ const glitchColors = [
       [255, 127, 0], // orange
       [127, 0, 255], // purple
     ];
-const WORDS = ['surveillance', 'blockchain', 'web3', 'WAGMI', 'floor', 'price', 'technology', 'AI', 'NFT'];
+// const WORDS = ['surveillance', 'blockchain', 'web3', 'WAGMI', 'floor', 'price', 'technology', 'AI', 'NFT'];
 
 
 function preload() {
    typewriter = loadFont('Moms_typewriter.ttf');
    defaultFont = loadFont("default.ttf");
+
+   loadStrings('words.txt', fileLoaded);
 
 }
 
@@ -88,9 +93,18 @@ function modelLoaded() {
   console.log('PoseNet Model Loaded!');
 }
 
+function fileLoaded(data) {
+  // Process the data from the text file
+  const wordsArray = data.join(',').split(',');
+
+  // Remove whitespace and convert to lowercase
+  WORDS = wordsArray.map(word => word.trim().toLowerCase());
+}
+
 function setup() {
   createCanvas(vidW * 4, vidH);
   word = random(WORDS)
+  colors = colors.map(rgb => color(...rgb));
 
   videos.push(createVideoAndModel(null, true, poses[0],0));
   videos.push(createVideoAndModel('c13.m4v', false, poses[1],1));
@@ -106,29 +120,32 @@ function setup() {
 function draw() {
 
   background(0);
+  // frameCounter++;
 
-  if (random()<0.05){
-    tintColor = [0, 0, 255,150]
-  }
-  else{
-    tintColor = [0, 0, 255,0]
+  frameCounter += tintDirection;
+  if (frameCounter == 200 || frameCounter == 0){
+    tintDirection *= -1;
   }
 
-  frameCounter++;
-  if (frameCounter % 30 == 0){
+  if (frameCounter % 20 == 0){
     word = random(WORDS);
   }
 
 
   for (let i = 0; i < videos.length; i++) {
+
     const vid = videos[i];
     image(vid.video, i*vidW, 0, vidW, vidH);
 
       for (let j = 0; j < numStreaks; j++) {
-        drawStreak(vid.video, i*vidW);
+        drawCrop(vid.video, i * (width / videos.length))
+        // drawStreak(vid.video, i * (width / videos.length));
+        // drawRainbowStreaks(vid.video, i * (width / videos.length));
       }
 
-        fill(invertColor(tintColor));
+        // fill(invertColor(tintColor));
+        // rect(i*vidW,0,vidW * 4, vidH)
+        fill(255,255,255,frameCounter%255);
         rect(i*vidW,0,vidW * 4, vidH)
 
 
@@ -177,17 +194,74 @@ function draw() {
 }
 
 
+function drawCrop(video, offset = 0){
+  const cropX = random(1024);
+  const cropY = random(1024);
+  const cropWidth = random(100, 400);  // Adjust the range of crop width as needed
+  const cropHeight = random(50, 100);  
+
+  // image(BGRimage, random(vidW)+offset, random(vidH), cropWidth, cropHeight, cropX, cropY, cropWidth, cropHeight);
+    image(videos[3].video, random(vidW)+offset, random(vidH), cropWidth, cropHeight, cropX, cropY, cropWidth, cropHeight);
+
+
+}
+
 
 function drawStreak(video, xOffset = 0) {
-  let y = floor(random(height)); 
-  let h = floor(video.height / 50); 
+// function drawStreak(xOffset = 0) {
+
+  let y = floor(random(video.height)); 
+  let h = floor(video.height / 50 ); 
+
+  // let h = floor(video.height); 
+
+  
+
   let xChange = floor(map(noise(y * yNoiseChange, (frameCount) * timeNoiseChange), 0.06, 0.94, -maxXChange, maxXChange)); 
   let yChange = floor(xChange * (maxYChange / maxXChange) * random() > 0.1 ? -1 : 1);
 
   push();
+  let sy = random(video.height - h);
+
+  // console.log(y + yChange, video.height)
   image(video, xOffset, y + yChange, vidW, h, xChange, y, vidW, h);
+    // image(video, xOffset, y + yChange, vidW, h, xChange, y, video.width, h*2);
+
+  // image(video, xOffset, y + yChange, vidW, h*2, xChange, xChange, video.width, h * 2);
+  // image(video, xOffset, y + yChange, vidW, h * 2, xChange, y, vidW, h * 2);
+  // image(video, xOffset, y + yChange, vidW, h * 4, xChange, sy, video.width, h * 4);
   pop();
 }
+
+
+function drawRainbowStreaks(video, xOffset = 0) {
+  let y = floor(random(height));  // Y position of the streak
+  let streakHeight = 10;  // Height of the streak
+
+  let gradient = drawingContext.createLinearGradient(xOffset, y, xOffset + vidW, y);
+  
+  // let colorStops = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#8B00FF"];
+
+  
+  // Gradient color stops distribute along the x-axis of the streak
+  colorStops.forEach((stopColor, i, arr) => {
+    gradient.addColorStop(i / (arr.length - 1), stopColor);
+  });
+
+  // Save the current drawing style
+  push();
+  
+  // Set the fill style to the gradient and draw the streak
+  drawingContext.fillStyle = gradient;
+  rect(xOffset, y, vidW, streakHeight);
+
+  // Restore the drawing style
+  pop();
+}
+
+
+
+
 
 
 function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
@@ -240,8 +314,6 @@ function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
     let leftHip = pose.keypoints[11].position;
 
 
-
-
     noFill();
     textFont("sans-serif");
     stroke(invertColor(bbColor));
@@ -253,21 +325,37 @@ function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
 
 	  if (rightWrist.y < rightShoulder.y || leftWrist.y < leftShoulder.y) {
 	    personColors[videoIndex][i] = invertColor(bbColor); // Hands up, change to red
+      personColors[videoIndex][i].push(150); 
+      fill(personColors[videoIndex][i]);
+      noStroke();
 	  } else if (Math.abs(rightHip.x - leftHip.x) > boxWidth*0.5) {
 	    personColors[videoIndex][i] = invertColor(hipsColor); // Hips apart, change to cyan
+      personColors[videoIndex][i].push(150); 
+      fill(personColors[videoIndex][i]);
+      noStroke();
 	  } else {
-	    personColors[videoIndex][i] = invertColor(rectColor); // Otherwise, change to yellow
+	    // personColors[videoIndex][i] = invertColor(rectColor); // Otherwise, change to yellow
+      personColors[videoIndex][i] = [0,0,0,0];
+      noFill();
+      stroke(invertColor(bbColor));
 	  }
-		 personColors[videoIndex][i].push(150); 
-
-	fill(personColors[videoIndex][i]);
-  noStroke();
+		 
+  
     let noisyY = map(noise(noiseOffsets[videoIndex][i]), 0, 1, 0, vidH); // Map the noise value to the range of the bounding box
 	   noiseOffsets[videoIndex][i] += 0.02; // increment the noise offset for the next frame
 
   rect(minX, minY, maxX - minX, maxY - minY);
+
+  // doppelganger
+  fill(personColors[videoIndex][i]);
+  noStroke();
+  // image(videos[1].video, minX, noisyY, boxHeight*0.7, boxHeight*2, maxX+maxX*0.05, noisyY, boxHeight*0.7, boxHeight*2)
+  // console.log( maxX+maxX*0.05, noisyY)
 	rect(maxX+maxX*0.05, noisyY, boxHeight*0.7, boxHeight*2);
 
+
+  // Word trails
+  stroke([0,0,0,0])
 	if (keypoints[9].score > confidenceThreshold) {  // If right wrist is detected
     
     let trail = {
@@ -284,7 +372,7 @@ function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
         word: word,
         x: keypoints[10].position.x + xOffset,
         y: keypoints[10].position.y + yOffset,
-        lifespan: 150  // Start with a full lifespan of 255 frames
+        lifespan: 200  // Start with a full lifespan of 255 frames
     };
     wordTrails[videoIndex].push(trail);
 	     }
@@ -332,6 +420,7 @@ function invertColor(colorArray) {
   else if (colorArray.length === 3) {
     return [255 - colorArray[0], 255 - colorArray[1], 255 - colorArray[2]];
   }  
+  // return colorArray
 }
 
 
