@@ -21,6 +21,7 @@ canvas {
   font-size: 3em; /* make the text twice as big as the standard text size */
   font-family: 'Courier New', Courier, monospace; /* monospace font */
   position: absolute;
-  top: calc(100% - 50px); /* adjust the position from the bottom */
+  bottom: 20px; /* adjust the position from the bottom */
   left: 20px; /* adjust the position from the left */
+  z-index: 1; 
 }

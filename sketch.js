@@ -155,7 +155,7 @@ function fileLoaded(data) {
 
 function setup() {
 
-    createCanvas(vidW * 4, vidH);
+    createCanvas(vidW * 2, vidH*2);
     word = random(WORDS)
     colors = colors.map(rgb => color(...rgb));
     
@@ -194,9 +194,6 @@ function draw() {
 
 
   background(0);
-  // frameCounter++;
-
-  
 
   frameCounter += tintDirection;
   if (frameCounter == 200 || frameCounter == 0){
@@ -209,7 +206,14 @@ function draw() {
 
   for (let i = 0; i < videos.length; i++) {
     const vid = videos[i];
-    image(vid.video, i*vidW, 0, vidW, vidH);
+
+  const col = i % 2;  // Column index (0 or 1)
+  const row = floor(i / 2);  // Row index (0 or 1)
+  const xPos = (i%2) * vidW;  // X position of the video
+  const yPos = row * vidH;  // Y position of the video
+
+
+    image(vid.video, xPos, yPos, vidW, vidH);
 
     for (let j = 0; j < numStreaks; j++) {
         // drawCrop(vid.video, i * (width / videos.length))
@@ -220,9 +224,9 @@ function draw() {
     // fill(invertColor(tintColor));
     // rect(i*vidW,0,vidW * 4, vidH)
     fill(255,255,255,frameCounter%255);
-    rect(i*vidW,0,vidW * 4, vidH)
+    rect(i*vidW,0,vidW * 2, vidH*2)
 
-    drawBoundingBox(i, i*vidW, 0);
+    drawBoundingBox(i, xPos, yPos);
 
   	wordTrails[i].forEach((trail, index) => {
   	    fill(0, trail.lifespan);
@@ -251,8 +255,12 @@ function draw() {
   drawCrop(videos[r_i].video, r_i * (width / videos.length))
   pop()
 
-  drawGlitchRectangle(0, 0, vidW, vidH / 15, 7, glitchColors);
-  drawGlitchRectangle(2*vidW, 0, vidW, vidH / 15, 7, glitchColors);
+  drawGlitchRectangle(0, 0, vidW, vidH / 20, 7, glitchColors);
+  drawGlitchRectangle(vidW, 0, vidW, vidH / 20, 7, glitchColors);
+    drawGlitchRectangle(0, vidH, vidW, vidH / 20, 7, glitchColors);
+    drawGlitchRectangle(vidW, vidH, vidW, vidH / 20, 7, glitchColors);
+
+
 
   let d = new Date();
   let hours = d.getHours();
