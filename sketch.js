@@ -25,6 +25,8 @@ let personColors = [[], [], [], []];
 let noiseOffsets = [[], [], [], []]; // Initialize an empty 2D array for the noise offsets
 let wordTrails = [[], [], [], []];
 
+let BGRimage;
+
 let lastSaveTime = 0;
 const saveInterval = 30000;  // 30 seconds
 
@@ -42,16 +44,22 @@ let colorStops = ["rgba(255,0,0,0.5)", "rgba(255,255,0,0.5)", "rgba(0,255,0,0.5)
 const TONES = [[196, 43, 167], [97, 153, 147], [69, 136, 247], [217, 136, 96]];
 
 const glitchColors = [
-      [238, 75, 43], // red
-      [0, 255, 0], // green
-      [0, 0, 255], // blue
-      [255, 255, 0], // yellow
-      [0, 255, 255], // cyan
-      [255, 0, 255], // magenta
-      [255, 127, 0], // orange
-      [127, 0, 255], // purple
-    ];
-// const WORDS = ['surveillance', 'blockchain', 'web3', 'WAGMI', 'floor', 'price', 'technology', 'AI', 'NFT'];
+  [255, 255, 255],    // White
+  [255, 255, 0],      // Yellow
+  [0, 255, 255],      // Cyan
+  [0, 255, 0],        // Lime
+  [255, 0, 255],      // Magenta
+  [255, 0, 0],        // Red
+  [0, 0, 255],        // Blue
+  [0, 0, 255],        // Blue
+  [0, 0, 0],          // Black
+  [255, 0, 255],      // Magenta
+  [0, 0, 0],          // Black
+  [0, 255, 255],      // Cyan
+  [0, 0, 0],          // Black
+  [255, 255, 255]     // White
+];
+
 
 // CHECK THE CONSOLE TO SEE THE IDS OF EACH CONNECTED CAMERA
 // COPY AND PASTE EACH ID ONTO ITS CORRESPONDENT VARIABLE
@@ -63,10 +71,9 @@ let webcam4DeviceId = "da99dad106512663c981f799f9e3dc836c20b611421373ed03788b80b
 let randomX, randomY; // used for segment of overimposed second video
 
 function preload() {
-   typewriter = loadFont('Moms_typewriter.ttf');
    defaultFont = loadFont("default.ttf");
-
    loadStrings('words.txt', fileLoaded);
+   BGRimage = loadImage('cloud.png');
 
 }
 
@@ -189,6 +196,8 @@ function draw() {
   background(0);
   // frameCounter++;
 
+  
+
   frameCounter += tintDirection;
   if (frameCounter == 200 || frameCounter == 0){
       tintDirection *= -1;
@@ -203,7 +212,7 @@ function draw() {
     image(vid.video, i*vidW, 0, vidW, vidH);
 
     for (let j = 0; j < numStreaks; j++) {
-        drawCrop(vid.video, i * (width / videos.length))
+        // drawCrop(vid.video, i * (width / videos.length))
         // drawStreak(vid.video, i * (width / videos.length));
         // drawRainbowStreaks(vid.video, i * (width / videos.length));
     }
@@ -218,8 +227,6 @@ function draw() {
   	wordTrails[i].forEach((trail, index) => {
   	    fill(0, trail.lifespan);
   	    textSize(15);
-        // textFont(typewriter);
-        // textFont("Courier, Helvetica, Arial, sans-serif");
         textFont("Courier");
 
   	    text(trail.word, trail.x, trail.y);
@@ -238,7 +245,14 @@ function draw() {
     text(i+1, i*vidW + 30, 50);  // Position of text is 10 pixels from left edge of each video and roughly in the middle of the first line of text (adjust as needed)
   }
 
+  push();
   filter(INVERT);
+  let r_i = int(random(4))
+  drawCrop(videos[r_i].video, r_i * (width / videos.length))
+  pop()
+
+  drawGlitchRectangle(0, 0, vidW, vidH / 15, 7, glitchColors);
+  drawGlitchRectangle(2*vidW, 0, vidW, vidH / 15, 7, glitchColors);
 
   let d = new Date();
   let hours = d.getHours();
@@ -262,10 +276,11 @@ function drawCrop(video, offset = 0){
     const cropX = random(1024);
     const cropY = random(1024);
     const cropWidth = random(100, 400);  // Adjust the range of crop width as needed
-    const cropHeight = random(50, 100);  
+    const cropHeight = random(100, 400);  
 
-    // image(BGRimage, random(vidW)+offset, random(vidH), cropWidth, cropHeight, cropX, cropY, cropWidth, cropHeight);
-    image(videos[0].video, random(vidW)+offset, random(vidH), cropWidth, cropHeight, cropX, cropY, cropWidth, cropHeight);
+    image(BGRimage, random(vidW)+offset, random(vidH), cropWidth, cropHeight, cropX, cropY, cropWidth, cropHeight);
+    // BGRimage.filter(INVERT);
+    // image(videos[0].video, random(vidW)+offset, random(vidH), cropWidth, cropHeight, cropX, cropY, cropWidth, cropHeight);
 }
 
 function drawStreak(video, xOffset = 0) {
@@ -445,6 +460,35 @@ function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
         }
     }
 }
+
+function drawGlitchRectangle(x, y, width, height, columns, colors) {
+  const columnWidth = width / columns;
+  const rowHeight = height / 2;
+
+  // Iterate through each column
+  for (let i = 0; i < columns; i++) {
+    const columnX = x + i * columnWidth;
+
+    // Calculate the y positions for the top and bottom rows
+    const topRowY = y;
+    const bottomRowY = y + rowHeight*2;
+
+    // Set the fill colors for the top and bottom rows
+    const topFillColor = colors[i];
+    const bottomFillColor = colors[i + columns];
+
+    // Draw the rectangles for the top and bottom rows
+    fill(topFillColor);
+    rect(columnX, topRowY, columnWidth, rowHeight*2);
+
+    fill(bottomFillColor);
+    rect(columnX, bottomRowY, columnWidth, rowHeight);
+  }
+}
+
+
+
+
 
 function updatePersonAddresses(poseArray, videoIndex) {
     // Reset person addresses when no poses are detected
