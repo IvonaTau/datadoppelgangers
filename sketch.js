@@ -24,8 +24,8 @@ let personColors = [[], [], [], []];
 let noiseOffsets = [[], [], [], []]; // Initialize an empty 2D array for the noise offsets
 let wordTrails = [[], [], [], []];
 
-let BGRimage;
-
+let lastSaveTime = 0;
+const saveInterval = 10000;  // 10 seconds
 
 const bbColor = [238, 75, 43]; // reddish
 const hipsColor = [9,171,155]; 
@@ -102,6 +102,7 @@ function fileLoaded(data) {
 }
 
 function setup() {
+
   createCanvas(vidW * 4, vidH);
   word = random(WORDS)
   colors = colors.map(rgb => color(...rgb));
@@ -114,10 +115,17 @@ function setup() {
   timeDisplay = createElement('h2', '');
   timeDisplay.position(100, vidH + 300);
   timeDisplay.class('time-display');
+
+  startTime = millis();
+
+  
+
 }
 
 
 function draw() {
+
+
 
   background(0);
   // frameCounter++;
@@ -189,6 +197,12 @@ function draw() {
 
   let timeStr = `${str(hours).padStart(2, '0')}:${str(minutes).padStart(2, '0')}:${str(seconds).padStart(2, '0')}:${str(milliseconds).padStart(3, '0')}`;
   timeDisplay.html(timeStr);
+
+
+  if (millis() - lastSaveTime >= saveInterval){
+    saveCanvas('canvas', 'png'); // Save the canvas as a PNG image
+    lastSaveTime = millis(); // Update the last save time
+  }
 
 
 }
