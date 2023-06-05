@@ -156,7 +156,7 @@ function setup() {
     randomX = 0 //random(0, vidW - 300);
     randomY = 0 //random(0, vidH - 300);
 
-    let dev_version = 2;
+    let dev_version = 1;
 
     // 1 CAM DEV VERSION
     if (dev_version == 1) {
