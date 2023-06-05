@@ -61,12 +61,12 @@ const glitchColors = [
 ];
 
 
-// CHECK THE CONSOLE TO SEE THE IDS OF EACH CONNECTED CAMERA
-// COPY AND PASTE EACH ID ONTO ITS CORRESPONDENT VARIABLE
-let webcam1DeviceId = "bd19954df8bc4dc1e02b33d38733c9a3390bea859d321d289be197509f792320";
-let webcam2DeviceId = "da99dad106512663c981f799f9e3dc836c20b611421373ed03788b80bda3f73a";
-let webcam3DeviceId = "da99dad106512663c981f799f9e3dc836c20b611421373ed03788b80bda3f73a";
-let webcam4DeviceId = "da99dad106512663c981f799f9e3dc836c20b611421373ed03788b80bda3f73a";
+// CHECK THE CONSOLE TO SEE THE IDS OF EACH CONNECTED CAMERA AND ->
+// -> COPY AND PASTE EACH ID ONTO ITS CORRESPONDENT VARIABLE
+let webcam1DeviceId = "32d3c0acb32a32618de499f9fb5b1669a108c09c240976127f724490ea5555ec";
+let webcam2DeviceId = "32d3c0acb32a32618de499f9fb5b1669a108c09c240976127f724490ea5555ec";
+let webcam3DeviceId = "4d8503ae0d6b28ed57f71d19becea1ea95c0618f35de90169ec3d591a94b0c18";
+let webcam4DeviceId = "4d8503ae0d6b28ed57f71d19becea1ea95c0618f35de90169ec3d591a94b0c18";
 
 let randomX, randomY; // used for segment of overimposed second video
 
@@ -104,41 +104,34 @@ function createVideoAndModel(source, isCapture , poseArray, videoIndex) {
 
 // 4 CAMS DEV VERSION
 // Function to create a video and its associated poseNet model
+// Function to create a video and its associated poseNet model
 function createVideoAndModel_4cams(source, isCapture, poseArray, videoIndex, deviceId) {
     let video;
 
     if (isCapture) {
-        // Create an HTML video element
-        video = document.createElement('video');
-        video.style.display = 'none'; // Hide the video element
-        document.body.appendChild(video); // Append it to the body
-
-        // Request the video stream and start the video
-        navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } })
-        .then(stream => {
-            video.srcObject = stream;
-            video.onloadedmetadata = () => { // Wait for the metadata to load
-                video.width = vidW;
-                video.height = vidH;
-                video.play();
-                scaleFactor = Math.min(vidW / video.videoWidth, vidH / video.videoHeight);
-            };
-        })
-      .catch(err => console.error(err));
+        video = createCapture({
+            video: {
+                deviceId: deviceId
+            },
+            audio: false
+        }, () => {
+            video.size(vidW, vidH);
+            scaleFactor = Math.min(vidW / video.width, vidH / video.height);
+        });
     } else {
-        video = createVideo(source);
-        video.loop();
-        video.size(vidW, vidH);
-        video.hide();
+        video = createVideo(source, () => {
+            video.size(vidW, vidH);
+            video.loop();
+        });
     }
 
     let poseNet = ml5.poseNet(video, modelLoaded);
     poseNet.on('pose', (results) => {
         poseArray.splice(0, poseArray.length, ...results);
-        updatePersonAddresses(poseArray, videoIndex); 
+        updatePersonAddresses(poseArray, videoIndex);
     });
-
-  return { video, poseNet };
+    
+    return { video, poseNet };
 }
 
 function modelLoaded() {
@@ -163,22 +156,22 @@ function setup() {
     randomX = 0 //random(0, vidW - 300);
     randomY = 0 //random(0, vidH - 300);
 
-    let dev_version = 1;
+    let dev_version = 2;
 
     // 1 CAM DEV VERSION
     if (dev_version == 1) {
         videos.push(createVideoAndModel(null, true, poses[0],0));
-        videos.push(createVideoAndModel('c13.m4v', true, poses[1],1));
-        videos.push(createVideoAndModel('3.m4v', false, poses[2], 2));
-        videos.push(createVideoAndModel('untitled.m4v', false, poses[3], 3)); 
+        videos.push(createVideoAndModel(null, true, poses[1],1));
+        videos.push(createVideoAndModel(null, true, poses[2], 2));
+        videos.push(createVideoAndModel(null, true, poses[3], 3)); 
     }
 
     // 4 CAMS DEV VERSION
-    if (dev_version == 2) {
-        videos.push(createVideoAndModel_4cams(null, true, poses[0],0, webcam1DeviceId));
-        videos.push(createVideoAndModel_4cams('c13.m4v', true, poses[1],1, webcam2DeviceId));
-        videos.push(createVideoAndModel_4cams('3.m4v', true, poses[2], 2, webcam3DeviceId));
-        videos.push(createVideoAndModel_4cams('untitled.m4v', true, poses[3], 3, webcam4DeviceId));
+    else if (dev_version == 2) {
+        videos.push(createVideoAndModel_4cams(null, true, poses[0], 0, webcam1DeviceId));
+        videos.push(createVideoAndModel_4cams(null, true, poses[1], 1, webcam2DeviceId));
+        videos.push(createVideoAndModel_4cams(null, true, poses[2], 2, webcam3DeviceId));
+        videos.push(createVideoAndModel_4cams(null, true, poses[3], 3, webcam4DeviceId));
     }
 
     // define which video to use for the segment drawn in drawBoundingBox
