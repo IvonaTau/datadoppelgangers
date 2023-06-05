@@ -15,7 +15,7 @@ const maxYChange = 10;
 const yNoiseChange = 0.01;
 const mouseYNoiseChange = 0.3;
 const timeNoiseChange = 0.013;
-const confidenceThreshold = 0.1;
+const confidenceThreshold = 0.2;
 
 let timeDisplay;
 let frameCounter = 0;
@@ -168,8 +168,8 @@ function setup() {
     // 1 CAM DEV VERSION
     if (dev_version == 1) {
         videos.push(createVideoAndModel(null, true, poses[0],0));
-        videos.push(createVideoAndModel('c13.m4v', false, poses[1],1));
-        videos.push(createVideoAndModel('3.m4v', true, poses[2], 2));
+        videos.push(createVideoAndModel('c13.m4v', true, poses[1],1));
+        videos.push(createVideoAndModel('3.m4v', false, poses[2], 2));
         videos.push(createVideoAndModel('untitled.m4v', false, poses[3], 3)); 
     }
 
@@ -410,10 +410,15 @@ function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
                 stroke(invertColor(bbColor));
             }
 
+            // subject tinted bounding box
+            rect(minX, minY, maxX - minX, maxY - minY);
+
+
+            // noisy doppelganger
+
             let noisyY = map(noise(noiseOffsets[videoIndex][i]), 0, 1, 0, vidH); // Map the noise value to the range of the bounding box
             noiseOffsets[videoIndex][i] += 0.02; // increment the noise offset for the next frame
 
-            // doppelganger
             fill(personColors[videoIndex][i]);
             noStroke();
             // image(videos[1].video, minX, noisyY, boxHeight*0.7, boxHeight*2, maxX+maxX*0.05, noisyY, boxHeight*0.7, boxHeight*2)
@@ -437,12 +442,11 @@ function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
             // image(video, 
             //     maxX + maxX * 0.01 - 300, noisyY, boxHeight * 0.7, boxHeight * 2, randomX, randomY, 300, 300);
             image(video, 
-                maxX+maxX*0.05, noisyY, boxHeight * 0.7, boxHeight * 2, randomX, randomY, 300, 300);
+                max(xOffset,maxX+maxX*0.05), max(yOffset,noisyY),  min(xOffset+vidW-maxX+maxX*0.05, boxHeight*0.7), min(vidH-noisyY ,boxHeight * 2), randomX, randomY, 300, 300);
 
             // adjacent colour rect
-            rect(maxX+maxX*0.05, noisyY, boxHeight*0.7, boxHeight*2);
-            // subject tinted bounding box
-            rect(minX, minY, maxX - minX, maxY - minY);
+            rect(max(xOffset,maxX+maxX*0.05), max(yOffset,noisyY), min(xOffset+vidW-maxX+maxX*0.05, boxHeight*0.7), min(vidH-noisyY ,boxHeight * 2));
+
 
             // Word trails
             stroke([0,0,0,0])
