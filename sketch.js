@@ -169,7 +169,7 @@ function setup() {
     if (dev_version == 1) {
         videos.push(createVideoAndModel(null, true, poses[0],0));
         videos.push(createVideoAndModel('c13.m4v', true, poses[1],1));
-        videos.push(createVideoAndModel('3.m4v', false, poses[2], 2));
+        videos.push(createVideoAndModel('3.m4v', true, poses[2], 2));
         videos.push(createVideoAndModel('untitled.m4v', false, poses[3], 3)); 
     }
 
@@ -244,9 +244,9 @@ function draw() {
   	    }
   	});
 
-    textSize(40);  // Time display
-    fill(255);  
-    text(i+1, i*vidW + 30, 50);  // Position of text is 10 pixels from left edge of each video and roughly in the middle of the first line of text (adjust as needed)
+    // textSize(15);  // Time display
+    // fill(255);  
+    // text(i+1, i*vidW + 30, 50);  // Position of text is 10 pixels from left edge of each video and roughly in the middle of the first line of text (adjust as needed)
   }
 
   push();
