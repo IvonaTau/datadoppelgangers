@@ -7,7 +7,7 @@ let vidH = 1080;
 let word
 let WORDS
 
-let numStreaks = 1;
+let numStreaks = 300;
 let scaleFactor;
 
 const maxXChange = 60;
@@ -61,12 +61,12 @@ const glitchColors = [
 ];
 
 
-// CHECK THE CONSOLE TO SEE THE IDS OF EACH CONNECTED CAMERA
-// COPY AND PASTE EACH ID ONTO ITS CORRESPONDENT VARIABLE
-let webcam1DeviceId = "bd19954df8bc4dc1e02b33d38733c9a3390bea859d321d289be197509f792320";
-let webcam2DeviceId = "da99dad106512663c981f799f9e3dc836c20b611421373ed03788b80bda3f73a";
-let webcam3DeviceId = "da99dad106512663c981f799f9e3dc836c20b611421373ed03788b80bda3f73a";
-let webcam4DeviceId = "da99dad106512663c981f799f9e3dc836c20b611421373ed03788b80bda3f73a";
+// CHECK THE CONSOLE TO SEE THE IDS OF EACH CONNECTED CAMERA AND ->
+// -> COPY AND PASTE EACH ID ONTO ITS CORRESPONDENT VARIABLE
+let webcam1DeviceId = "32d3c0acb32a32618de499f9fb5b1669a108c09c240976127f724490ea5555ec";
+let webcam2DeviceId = "32d3c0acb32a32618de499f9fb5b1669a108c09c240976127f724490ea5555ec";
+let webcam3DeviceId = "4d8503ae0d6b28ed57f71d19becea1ea95c0618f35de90169ec3d591a94b0c18";
+let webcam4DeviceId = "4d8503ae0d6b28ed57f71d19becea1ea95c0618f35de90169ec3d591a94b0c18";
 
 let randomX, randomY; // used for segment of overimposed second video
 
@@ -104,41 +104,34 @@ function createVideoAndModel(source, isCapture , poseArray, videoIndex) {
 
 // 4 CAMS DEV VERSION
 // Function to create a video and its associated poseNet model
+// Function to create a video and its associated poseNet model
 function createVideoAndModel_4cams(source, isCapture, poseArray, videoIndex, deviceId) {
     let video;
 
     if (isCapture) {
-        // Create an HTML video element
-        video = document.createElement('video');
-        video.style.display = 'none'; // Hide the video element
-        document.body.appendChild(video); // Append it to the body
-
-        // Request the video stream and start the video
-        navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } })
-        .then(stream => {
-            video.srcObject = stream;
-            video.onloadedmetadata = () => { // Wait for the metadata to load
-                video.width = vidW;
-                video.height = vidH;
-                video.play();
-                scaleFactor = Math.min(vidW / video.videoWidth, vidH / video.videoHeight);
-            };
-        })
-      .catch(err => console.error(err));
+        video = createCapture({
+            video: {
+                deviceId: deviceId
+            },
+            audio: false
+        }, () => {
+            video.size(vidW, vidH);
+            scaleFactor = Math.min(vidW / video.width, vidH / video.height);
+        });
     } else {
-        video = createVideo(source);
-        video.loop();
-        video.size(vidW, vidH);
-        video.hide();
+        video = createVideo(source, () => {
+            video.size(vidW, vidH);
+            video.loop();
+        });
     }
 
     let poseNet = ml5.poseNet(video, modelLoaded);
     poseNet.on('pose', (results) => {
         poseArray.splice(0, poseArray.length, ...results);
-        updatePersonAddresses(poseArray, videoIndex); 
+        updatePersonAddresses(poseArray, videoIndex);
     });
-
-  return { video, poseNet };
+    
+    return { video, poseNet };
 }
 
 function modelLoaded() {
@@ -168,17 +161,20 @@ function setup() {
     // 1 CAM DEV VERSION
     if (dev_version == 1) {
         videos.push(createVideoAndModel(null, true, poses[0],0));
-        videos.push(createVideoAndModel('c13.m4v', true, poses[1],1));
-        videos.push(createVideoAndModel('3.m4v', true, poses[2], 2));
-        videos.push(createVideoAndModel('untitled.m4v', false, poses[3], 3)); 
+        // videos.push(createVideoAndModel('c13.m4v', true, poses[1],1));
+        // videos.push(createVideoAndModel('3.m4v', true, poses[2], 2));
+        // videos.push(createVideoAndModel('untitled.m4v', false, poses[3], 3)); 
+        videos.push(createVideoAndModel(null, true, poses[1],1));
+        videos.push(createVideoAndModel(null, true, poses[2], 2));
+        videos.push(createVideoAndModel(null, true, poses[3], 3)); 
     }
 
     // 4 CAMS DEV VERSION
-    if (dev_version == 2) {
-        videos.push(createVideoAndModel_4cams(null, true, poses[0],0, webcam1DeviceId));
-        videos.push(createVideoAndModel_4cams('c13.m4v', true, poses[1],1, webcam2DeviceId));
-        videos.push(createVideoAndModel_4cams('3.m4v', true, poses[2], 2, webcam3DeviceId));
-        videos.push(createVideoAndModel_4cams('untitled.m4v', true, poses[3], 3, webcam4DeviceId));
+    else if (dev_version == 2) {
+        videos.push(createVideoAndModel_4cams(null, true, poses[0], 0, webcam1DeviceId));
+        videos.push(createVideoAndModel_4cams(null, true, poses[1], 1, webcam2DeviceId));
+        videos.push(createVideoAndModel_4cams(null, true, poses[2], 2, webcam3DeviceId));
+        videos.push(createVideoAndModel_4cams(null, true, poses[3], 3, webcam4DeviceId));
     }
 
     // define which video to use for the segment drawn in drawBoundingBox
@@ -217,7 +213,7 @@ function draw() {
 
     for (let j = 0; j < numStreaks; j++) {
         // drawCrop(vid.video, i * (width / videos.length))
-        // drawStreak(vid.video, i * (width / videos.length));
+        drawStreak(vid.video, xPos, yPos);
         // drawRainbowStreaks(vid.video, i * (width / videos.length));
     }
 
@@ -252,7 +248,7 @@ function draw() {
   push();
   filter(INVERT);
   let r_i = int(random(4))
-  drawCrop(videos[r_i].video, r_i * (width / videos.length))
+  // drawCrop(videos[r_i].video, r_i * (width / videos.length))
   pop()
 
   drawGlitchRectangle(0, 0, vidW, vidH / 20, 7, glitchColors);
@@ -291,28 +287,29 @@ function drawCrop(video, offset = 0){
     // image(videos[0].video, random(vidW)+offset, random(vidH), cropWidth, cropHeight, cropX, cropY, cropWidth, cropHeight);
 }
 
-function drawStreak(video, xOffset = 0) {
 
-    let y = floor(random(video.height)); 
-    let h = floor(video.height / 50 ); 
+function drawStreak(video, xOffset = 0, yOffset = 0) {
+  let y = random(vidH); // Randomly select the vertical position of the streak
+  let h = floor(vidH / 100); // Height of each streak based on the video height
+   let xChange = floor(map(noise(y * yNoiseChange, (frameCount) * timeNoiseChange), 0.06, 0.94, -maxXChange, maxXChange)); 
+  let yChange = 30;
 
-    // let h = floor(video.height); 
-
-    let xChange = floor(map(noise(y * yNoiseChange, (frameCount) * timeNoiseChange), 0.06, 0.94, -maxXChange, maxXChange)); 
-    let yChange = floor(xChange * (maxYChange / maxXChange) * random() > 0.1 ? -1 : 1);
-
-    push();
-    let sy = random(video.height - h);
-
-    // console.log(y + yChange, video.height)
-    image(video, xOffset, y + yChange, vidW, h, xChange, y, vidW, h);
-    // image(video, xOffset, y + yChange, vidW, h, xChange, y, video.width, h*2);
-
-    // image(video, xOffset, y + yChange, vidW, h*2, xChange, xChange, video.width, h * 2);
-    // image(video, xOffset, y + yChange, vidW, h * 2, xChange, y, vidW, h * 2);
-    // image(video, xOffset, y + yChange, vidW, h * 4, xChange, sy, video.width, h * 4);
-    pop();
+  // Draw the streak using the video dimensions
+  push();
+  image(
+    video,
+    xOffset + xChange,
+    yOffset + y + yChange+100,
+    video.width,
+    4*h,
+    0,
+    y,
+    video.width,
+    h
+  );
+  pop();
 }
+
 
 function drawRainbowStreaks(video, xOffset = 0) {
     let y = floor(random(height));  // Y position of the streak
@@ -386,12 +383,7 @@ function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
             let rightHip = pose.keypoints[12].position;
             let leftHip = pose.keypoints[11].position;
 
-            noFill();
-            textFont("sans-serif");
-            stroke(invertColor(bbColor));
-            strokeWeight(strokeWidth);
-            textSize(int(0.5 * (maxX - minX)));
-            text(address, minX, minY - 5); // position text 5 pixels above the bounding box
+
 
             if (rightWrist.y < rightShoulder.y || leftWrist.y < leftShoulder.y) {
                 personColors[videoIndex][i] = invertColor(bbColor); // Hands up, change to red
@@ -447,6 +439,13 @@ function drawBoundingBox(videoIndex, xOffset = 0, yOffset = 0) {
             // adjacent colour rect
             rect(max(xOffset,maxX+maxX*0.05), max(yOffset,noisyY), min(xOffset+vidW-maxX+maxX*0.05, boxHeight*0.7), min(vidH-noisyY ,boxHeight * 2));
 
+
+            noFill();
+            textFont("sans-serif");
+            stroke(invertColor(bbColor));
+            strokeWeight(strokeWidth);
+            textSize(int(0.5 * (maxX - minX)));
+            text(address, minX, minY - 5); // position text 5 pixels above the bounding box
 
             // Word trails
             stroke([0,0,0,0])
